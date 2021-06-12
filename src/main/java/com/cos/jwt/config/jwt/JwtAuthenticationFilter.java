@@ -63,7 +63,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
             } catch (IOException e) {
                 e.printStackTrace();
-            }
+            } return null;
 
         //  2.  정상인지 로그인 시도 . AuthenticationManager 로 로그인 시도를 하면
         //                          PrincipalDetails 가 호출 되고 loadUserByUsername() 함수가 실행됨
@@ -72,26 +72,23 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
         //  4.  JWT 토큰을 만들어서 응답 해주면 됨
 
-        return null;
     }
 
     //  attemptAuthentication 실행후 인증이 정상적으로 되었으면 successfulAuthentication 함수가 실행 된다.
-    //  JWT 토큰을 만들어서 request요청한 사용자에게 JWT토큰을 response 해주면 됨.
-//    @Override
-//    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
-//
-//        PrincipalDetails principalDetails = (PrincipalDetails) authResult.getPrincipal();
-//
-//        // RSA 방식은 아니고  HASH 암호 방식임
-//        String jwtToken = JWT.create()
-//                .withSubject("cos토큰")
-//                .withExpiresAt(new Date(System.currentTimeMillis()+(60000*10)))
-//                .withClaim("id",principalDetails.getUsername())
-//                .withClaim("pw",principalDetails.getPassword())
-//                .sign(Algorithm.HMAC512("cos"));
-//
-//        response.addHeader("Authorization","Bearer" + jwtToken);
-//
-//        super.successfulAuthentication(request, response, chain, authResult);
-//    }
+    //  JWT 토큰을 만들어서 request 요청한 사용자에게 JWT 토큰을 response 해주면 됨.
+    @Override
+    protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
+        System.out.println("successfulAuthentication 실행됨: 인증이 완료됨");
+        PrincipalDetails principalDetails = (PrincipalDetails) authResult.getPrincipal();
+
+        // RSA 방식은 아니고  HASH 암호 방식임
+        String jwtToken = JWT.create()
+                .withSubject("cos토큰")                                                   //  토큰 이름
+                .withExpiresAt(new Date(System.currentTimeMillis()+(60000*10)))          //  토큰 유효 시간   (10분 = 1분*10)
+                .withClaim("id",principalDetails.getUser().getId())                 // 내가 넣고 싶은 키 값 넣으면 됨
+                .withClaim("username",principalDetails.getUser().getUsername())
+                .sign(Algorithm.HMAC512("cos"));
+
+        response.addHeader("Authorization","Bearer " + jwtToken);               //  Bearer 띄고 써야함
+    }
 }
